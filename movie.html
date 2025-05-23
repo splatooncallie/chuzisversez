@@ -73,74 +73,7 @@
   <div id="movieDetails">Loading movie details...</div>
 
   <script>
-    const TMDB_API_KEY = 'YOUR_TMDB_API_KEY_HERE'; // Replace this with your TMDb API key
+    const TMDB_API_KEY = 'e8091d447e84728ebe43797245cc6f85'; // Your TMDb API key
     const OMDB_API_KEY = 'eec8827d'; // Your OMDb key (optional for extra info)
 
     const detailsDiv = document.getElementById('movieDetails');
-    const params = new URLSearchParams(window.location.search);
-    const movieId = params.get('id');
-
-    const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w500';
-
-    if (!movieId) {
-      detailsDiv.textContent = 'No movie selected.';
-    } else {
-      fetchMovieDetails(movieId);
-    }
-
-    async function fetchMovieDetails(id) {
-      detailsDiv.textContent = 'Loading movie details...';
-      try {
-        // Fetch TMDb movie details
-        const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}&append_to_response=videos`);
-        const data = await res.json();
-
-        if(data && data.id) {
-          const poster = data.poster_path ? TMDB_IMG_BASE + data.poster_path : 'https://via.placeholder.com/300x450?text=No+Image';
-          const year = data.release_date ? data.release_date.slice(0,4) : 'N/A';
-
-          // Find official trailer video on YouTube (TMDb videos)
-          let trailerKey = null;
-          if(data.videos && data.videos.results) {
-            const trailers = data.videos.results.filter(v => v.type === "Trailer" && v.site === "YouTube");
-            if(trailers.length) {
-              trailerKey = trailers[0].key;
-            }
-          }
-
-          detailsDiv.innerHTML = `
-            <div class="container">
-              <img src="${poster}" alt="${data.title}" />
-              <div class="info">
-                <h1>${data.title} (${year})</h1>
-                <p><strong>Genres:</strong> ${data.genres.map(g => g.name).join(', ')}</p>
-                <p><strong>Runtime:</strong> ${data.runtime} minutes</p>
-                <p><strong>Rating:</strong> ${data.vote_average} / 10 (${data.vote_count} votes)</p>
-                <p><strong>Release Date:</strong> ${data.release_date}</p>
-                <p><strong>Overview:</strong> ${data.overview}</p>
-                <p><a href="https://www.themoviedb.org/movie/${data.id}" target="_blank" rel="noopener">View on TMDb</a></p>
-                <p><a href="https://www.imdb.com/title/${data.imdb_id}" target="_blank" rel="noopener">View on IMDb</a></p>
-              </div>
-            </div>
-            <div id="trailer">
-              ${trailerKey ? 
-                `<iframe 
-                   src="https://www.youtube.com/embed/${trailerKey}" 
-                   allowfullscreen 
-                   title="Official Trailer">
-                 </iframe>`
-                : '<p style="text-align:center; margin-top: 1rem;">No trailer available.</p>'
-              }
-            </div>
-          `;
-
-        } else {
-          detailsDiv.textContent = 'Movie not found.';
-        }
-      } catch(e) {
-        detailsDiv.textContent = 'Error loading movie details.';
-      }
-    }
-  </script>
-</body>
-</html>

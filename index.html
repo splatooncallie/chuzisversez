@@ -1,195 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chuzis - Movie Explorer</title>
-  <style>
-    body {
-      background: #0d1117;
-      color: #c9d1d9;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 1rem;
-    }
-    h1 {
-      text-align: center;
-      color: #f9a825;
-      font-weight: 900;
-      margin-bottom: 0;
-    }
-    #greeting {
-      text-align: center;
-      margin: 0.5rem 0 2rem;
-      font-size: 1.2rem;
-      font-style: italic;
-      color: #f9a825cc;
-    }
-    form {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 1rem;
-    }
-    input[type="text"] {
-      padding: 0.6rem 1rem;
-      font-size: 1.1rem;
-      border-radius: 25px 0 0 25px;
-      border: none;
-      width: 70%;
-      outline: none;
-    }
-    button {
-      background: #f9a825;
-      border: none;
-      color: #0d1117;
-      font-weight: bold;
-      padding: 0.6rem 1.5rem;
-      font-size: 1.1rem;
-      cursor: pointer;
-      border-radius: 0 25px 25px 0;
-      transition: background-color 0.3s ease;
-    }
-    button:hover {
-      background-color: #c7a200;
-    }
-    .movies {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px,1fr));
-      gap: 1.25rem;
-    }
-    .movie {
-      background: #161b22;
-      border-radius: 15px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.6);
-      cursor: pointer;
-      overflow: hidden;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-    }
-    .movie:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 12px #f9a825;
-    }
-    .movie img {
-      width: 100%;
-      height: 225px;
-      object-fit: cover;
-      border-bottom: 2px solid #f9a825;
-    }
-    .movie-title {
-      margin: 0.5rem 0 0.3rem;
-      font-weight: 700;
-      font-size: 1rem;
-      color: #f9a825;
-      padding: 0 0.5rem;
-      min-height: 3em;
-    }
-    .movie-year {
-      font-size: 0.9rem;
-      color: #8b8f94;
-      margin-bottom: 0.7rem;
-    }
-    #message {
-      text-align: center;
-      margin-top: 2rem;
-      font-style: italic;
-      color: #888;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chuzis - Movie Search</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #121212; color: #eee; margin: 0; padding: 20px; }
+  h1 { text-align: center; }
+  #movies { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; }
+  .movie { cursor: pointer; width: 150px; }
+  .movie img { width: 100%; border-radius: 8px; }
+  .movie-title { text-align: center; margin-top: 5px; font-size: 14px; }
+  #searchBar { display: block; margin: 0 auto 20px auto; width: 300px; padding: 10px; font-size: 16px; border-radius: 8px; border: none; }
+  #greeting { text-align: center; margin-bottom: 20px; font-size: 18px; }
+</style>
 </head>
 <body>
-  <h1>Chuzis</h1>
-  <div id="greeting">Welcome! Check out trending movies or search your favorite films below.</div>
+  <h1>Welcome to Chuzis!</h1>
+  <div id="greeting">Search for films or browse trending movies below.</div>
+  <input id="searchBar" type="text" placeholder="Search movies..." />
 
-  <form id="searchForm">
-    <input type="text" id="searchInput" placeholder="Search movies by title..." required />
-    <button type="submit">Search</button>
-  </form>
+  <div id="movies">Loading trending movies...</div>
 
-  <div id="movies" class="movies"></div>
-  <div id="message"></div>
+<script>
+  const token = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJlODA5MWQ0NDdlODQ3MjhlYmU0Mzc5NzI0NWNjNmY4NSIsIm5iZiI6MTc0ODAzNTQ0Mi43MDUsInN1YiI6IjY4MzBlNzcyNjQwZTA1YjQyOGI2YTlmYyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.WoEuagI5GPkLtkM8xeY81jpNj6sS9VMRcYLuLS3xpFM';
+  const IMG_BASE = 'https://image.tmdb.org/t/p/w300';
+  const moviesDiv = document.getElementById('movies');
+  const searchBar = document.getElementById('searchBar');
 
-  <script>
-    // YOUR API KEYS
-    const TMDB_API_KEY = 'e8091d447e84728ebe43797245cc6f85'; // Your TMDb API key
-    const OMDB_API_KEY = 'eec8827d'; // Your OMDb key (used later if needed)
+  // Fetch trending movies on load
+  fetchMovies('trending/movie/week');
 
-    const moviesDiv = document.getElementById('movies');
-    const form = document.getElementById('searchForm');
-    const input = document.getElementById('searchInput');
-    const messageDiv = document.getElementById('message');
-
-    // TMDb image base URL
-    const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w500';
-
-    // Load trending movies on page load
-    window.onload = () => {
-      fetchTrendingMovies();
-    };
-
-    async function fetchTrendingMovies() {
-      messageDiv.textContent = 'Loading trending movies...';
-      moviesDiv.innerHTML = '';
-      try {
-        const res = await fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${TMDB_API_KEY}`);
-        const data = await res.json();
-        if(data.results && data.results.length) {
-          messageDiv.textContent = '';
-          displayMovies(data.results);
-        } else {
-          messageDiv.textContent = 'No trending movies found.';
-        }
-      } catch(e) {
-        messageDiv.textContent = 'Error loading trending movies.';
+  // Listen for search input
+  searchBar.addEventListener('keypress', e => {
+    if (e.key === 'Enter') {
+      const query = searchBar.value.trim();
+      if (query.length > 0) {
+        fetchMovies(`search/movie?query=${encodeURIComponent(query)}`);
+      } else {
+        fetchMovies('trending/movie/week');
       }
     }
+  });
 
-    function displayMovies(movies) {
-      moviesDiv.innerHTML = '';
-      movies.forEach(movie => {
-        const div = document.createElement('div');
-        div.className = 'movie';
-        div.title = movie.title;
-        const posterPath = movie.poster_path ? TMDB_IMG_BASE + movie.poster_path : 'https://via.placeholder.com/150x225?text=No+Image';
-        const year = movie.release_date ? movie.release_date.slice(0,4) : 'N/A';
-        div.innerHTML = `
-          <img src="${posterPath}" alt="${movie.title}" />
-          <div class="movie-title">${movie.title}</div>
-          <div class="movie-year">${year}</div>
-        `;
-        div.addEventListener('click', () => {
-          window.location.href = `movie.html?id=${movie.id}`;
-        });
-        moviesDiv.appendChild(div);
+  async function fetchMovies(endpoint) {
+    moviesDiv.textContent = 'Loading movies...';
+    try {
+      const res = await fetch(`https://api.themoviedb.org/3/${endpoint}`, {
+        headers: { Authorization: 'Bearer ' + token }
       });
-    }
+      if (!res.ok) throw new Error('HTTP error ' + res.status);
 
-    // Search movies on submit
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      const query = input.value.trim();
-      if (!query) return;
-
-      messageDiv.textContent = 'Searching...';
-      moviesDiv.innerHTML = '';
-
-      try {
-        const res = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&include_adult=false`);
-        const data = await res.json();
-        if(data.results && data.results.length) {
-          messageDiv.textContent = `Search results for "${query}":`;
-          displayMovies(data.results);
-        } else {
-          messageDiv.textContent = `No results found for "${query}".`;
-        }
-      } catch(e) {
-        messageDiv.textContent = 'Error during search.';
+      const data = await res.json();
+      if (!data.results || data.results.length === 0) {
+        moviesDiv.textContent = 'No movies found.';
+        return;
       }
-    });
-  </script>
+
+      moviesDiv.innerHTML = '';
+      data.results.forEach(movie => {
+        const movieEl = document.createElement('div');
+        movieEl.className = 'movie';
+        movieEl.innerHTML = `
+          <img src="${movie.poster_path ? IMG_BASE + movie.poster_path : 'https://via.placeholder.com/300x450?text=No+Image'}" alt="${movie.title}" />
+          <div class="movie-title">${movie.title}</div>
+        `;
+        movieEl.onclick = () => {
+          // Open movie.html with movie ID query param
+          window.location.href = `movie.html?id=${movie.id}`;
+        };
+        moviesDiv.appendChild(movieEl);
+      });
+    } catch (err) {
+      moviesDiv.textContent = 'Failed to load movies.';
+      console.error(err);
+    }
+  }
+</script>
 </body>
 </html>

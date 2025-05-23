@@ -1,136 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chuzis - Movie Details</title>
-  <style>
-    body {
-      background: #0d1117;
-      color: #c9d1d9;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 1rem;
-    }
-    a {
-      color: #f9a825;
-      text-decoration: none;
-      font-weight: bold;
-      display: inline-block;
-      margin-bottom: 1rem;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-    .container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      background: #161b22;
-      border-radius: 15px;
-      padding: 1rem;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.7);
-    }
-    img {
-      border-radius: 15px;
-      max-width: 300px;
-      width: 100%;
-      height: auto;
-      object-fit: cover;
-      flex-shrink: 0;
-    }
-    .info {
-      flex: 1;
-      min-width: 250px;
-      color: #eee;
-    }
-    h1 {
-      color: #f9a825;
-      margin-top: 0;
-    }
-    p {
-      margin: 0.3rem 0;
-    }
-    strong {
-      color: #f9a825;
-    }
-    #trailer {
-      margin-top: 1rem;
-      border-radius: 15px;
-      overflow: hidden;
-      box-shadow: 0 3px 12px #f9a825aa;
-    }
-    iframe {
-      width: 100%;
-      height: 360px;
-      border: none;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chuzis - Movie Details</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #121212; color: #eee; margin: 0; padding: 20px; }
+  .container { display: flex; flex-wrap: wrap; gap: 20px; max-width: 900px; margin: 0 auto; }
+  img { border-radius: 10px; max-width: 300px; }
+  .info { flex: 1; min-width: 280px; }
+  h1 { margin-top: 0; }
+  #trailer iframe { width: 100%; height: 300px; border: none; border-radius: 10px; margin-top: 15px; }
+  a { color: #0af; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  #back { margin-bottom: 20px; display: block; }
+</style>
 </head>
 <body>
-  <a href="index.html">&larr; Back to Chuzis</a>
-  <div id="movieDetails">Loading movie details...</div>
+<a id="back" href="index.html">← Back to Chuzis</a>
+<div id="details">Loading movie details...</div>
 
-  <script>
-    const TMDB_API_KEY = 'e8091d447e84728ebe43797245cc6f85'; // Your TMDb API key
-    const OMDB_API_KEY = 'eec8827d'; // Your OMDb key (optional for extra info)
+<script>
+  const token = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJlODA5MWQ0NDdlODQ3MjhlYmU0Mzc5NzI0NWNjNmY4NSIsIm5iZiI6MTc0ODAzNTQ0Mi43MDUsInN1YiI6IjY4MzBlNzcyNjQwZTA1YjQyOGI2YTlmYyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.WoEuagI5GPkLtkM8xeY81jpNj6sS9VMRcYLuLS3xpFM';
+  const IMG_BASE = 'https://image.tmdb.org/t/p/w500';
+  const detailsDiv = document.getElementById('details');
 
-    const detailsDiv = document.getElementById('movieDetails');
-    const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w500';
+  const urlParams = new URLSearchParams(window.location.search);
+  const movieId = urlParams.get('id');
 
-    // Get movie ID from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const movieId = urlParams.get('id');
+  if (!movieId) {
+    detailsDiv.textContent = 'No movie selected.';
+  } else {
+    fetchMovieDetails(movieId);
+  }
 
-    if (!movieId) {
-      detailsDiv.textContent = 'No movie ID provided.';
-    } else {
-      fetchMovieDetails(movieId);
-    }
+  async function fetchMovieDetails(id) {
+    detailsDiv.textContent = 'Loading movie details...';
 
-    async function fetchMovieDetails(id) {
-      detailsDiv.textContent = 'Loading movie details...';
+    try {
+      const res = await fetch(`https://api.themoviedb.org/3/movie/${id}`, {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      if (!res.ok) throw new Error('HTTP error ' + res.status);
 
-      try {
-        // Fetch movie details
-        const movieRes = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}&language=en-US`);
-        const movie = await movieRes.json();
+      const movie = await res.json();
 
-        if(movie.status_code === 34) { // Not found
-          detailsDiv.textContent = 'Movie not found.';
-          return;
-        }
+      // Fetch videos (trailers)
+      const videosRes = await fetch(`https://api.themoviedb.org/3/movie/${id}/videos`, {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      const videosData = await videosRes.json();
 
-        // Fetch videos (trailers)
-        const videosRes = await fetch(`https://api.themoviedb.org/3/movie/${id}/videos?api_key=${TMDB_API_KEY}&language=en-US`);
-        const videosData = await videosRes.json();
+      // Find official trailer on YouTube
+      const trailer = videosData.results.find(v => v.type === 'Trailer' && v.site === 'YouTube');
 
-        // Find official trailer YouTube video
-        const trailer = videosData.results.find(v =>
-          v.type === 'Trailer' && v.site === 'YouTube'
-        );
-
-        const poster = movie.poster_path ? TMDB_IMG_BASE + movie.poster_path : 'https://via.placeholder.com/300x450?text=No+Image';
-
-        detailsDiv.innerHTML = `
-          <div class="container">
-            <img src="${poster}" alt="${movie.title}" />
-            <div class="info">
-              <h1>${movie.title} (${movie.release_date ? movie.release_date.slice(0,4) : 'N/A'})</h1>
-              <p><strong>Genres:</strong> ${movie.genres.map(g => g.name).join(', ')}</p>
-              <p><strong>Rating:</strong> ${movie.vote_average} / 10 (${movie.vote_count} votes)</p>
-              <p><strong>Runtime:</strong> ${movie.runtime} min</p>
-              <p><strong>Overview:</strong> ${movie.overview || 'No overview available.'}</p>
-              ${trailer ? `<div id="trailer"><iframe src="https://www.youtube.com/embed/${trailer.key}" allowfullscreen></iframe></div>` : '<p>No trailer available.</p>'}
-            </div>
+      detailsDiv.innerHTML = `
+        <div class="container">
+          <img src="${movie.poster_path ? IMG_BASE + movie.poster_path : 'https://via.placeholder.com/300x450?text=No+Image'}" alt="${movie.title}" />
+          <div class="info">
+            <h1>${movie.title} (${movie.release_date ? movie.release_date.slice(0,4) : 'N/A'})</h1>
+            <p><strong>Genres:</strong> ${movie.genres.map(g => g.name).join(', ')}</p>
+            <p><strong>Rating:</strong> ${movie.vote_average} / 10 (${movie.vote_count} votes)</p>
+            <p><strong>Runtime:</strong> ${movie.runtime} min</p>
+            <p><strong>Overview:</strong> ${movie.overview || 'No overview available.'}</p>
+            ${trailer ? `<div id="trailer"><iframe src="https://www.youtube.com/embed/${trailer.key}" allowfullscreen></iframe></div>` : '<p>No trailer available.</p>'}
           </div>
-        `;
-
-      } catch(e) {
-        detailsDiv.textContent = 'Failed to load movie details.';
-      }
+        </div>
+      `;
+    } catch (e) {
+      detailsDiv.textContent = 'Failed to load movie details.';
+      console.error(e);
     }
-  </script>
+  }
+</script>
 </body>
 </html>

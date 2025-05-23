@@ -3,105 +3,143 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Movie Details</title>
+  <title>Chuzis - Movie Details</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       max-width: 800px;
       margin: 0 auto;
       padding: 1rem;
-      background: #111;
-      color: #eee;
     }
     a {
-      color: #f90;
+      color: #f9a825;
       text-decoration: none;
       font-weight: bold;
+      display: inline-block;
+      margin-bottom: 1rem;
     }
     a:hover {
       text-decoration: underline;
     }
-    img {
-      max-width: 300px;
-      border-radius: 10px;
-      margin-bottom: 1rem;
-    }
-    .details {
+    .container {
       display: flex;
-      gap: 1rem;
       flex-wrap: wrap;
-      align-items: flex-start;
+      gap: 1rem;
+      background: #161b22;
+      border-radius: 15px;
+      padding: 1rem;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.7);
+    }
+    img {
+      border-radius: 15px;
+      max-width: 300px;
+      width: 100%;
+      height: auto;
+      object-fit: cover;
+      flex-shrink: 0;
     }
     .info {
-      max-width: 450px;
+      flex: 1;
+      min-width: 250px;
+      color: #eee;
+    }
+    h1 {
+      color: #f9a825;
+      margin-top: 0;
+    }
+    p {
+      margin: 0.3rem 0;
+    }
+    strong {
+      color: #f9a825;
+    }
+    #trailer {
+      margin-top: 1rem;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 3px 12px #f9a825aa;
     }
     iframe {
-      margin-top: 1rem;
       width: 100%;
-      height: 315px;
+      height: 360px;
       border: none;
-      border-radius: 10px;
     }
   </style>
 </head>
 <body>
-  <a href="index.html">&larr; Back to Search</a>
-  <div id="movieDetails"></div>
+  <a href="index.html">&larr; Back to Chuzis</a>
+  <div id="movieDetails">Loading movie details...</div>
 
   <script>
-    const apiKey = 'eec8827d'; // Your OMDb API key
+    const TMDB_API_KEY = 'YOUR_TMDB_API_KEY_HERE'; // Replace this with your TMDb API key
+    const OMDB_API_KEY = 'eec8827d'; // Your OMDb key (optional for extra info)
 
-    const params = new URLSearchParams(window.location.search);
-    const imdbID = params.get('id');
     const detailsDiv = document.getElementById('movieDetails');
+    const params = new URLSearchParams(window.location.search);
+    const movieId = params.get('id');
 
-    if (!imdbID) {
-      detailsDiv.innerHTML = '<p>No movie selected.</p>';
+    const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w500';
+
+    if (!movieId) {
+      detailsDiv.textContent = 'No movie selected.';
     } else {
-      detailsDiv.innerHTML = 'Loading...';
+      fetchMovieDetails(movieId);
+    }
 
-      async function fetchMovie() {
-        try {
-          const res = await fetch(`https://www.omdbapi.com/?apikey=${apiKey}&i=${imdbID}&plot=full`);
-          const data = await res.json();
-          if (data.Response === "True") {
-            detailsDiv.innerHTML = `
-              <h1>${data.Title} (${data.Year})</h1>
-              <div class="details">
-                <img src="${data.Poster !== 'N/A' ? data.Poster : 'https://via.placeholder.com/300x450?text=No+Image'}" alt="${data.Title}" />
-                <div class="info">
-                  <p><strong>Genre:</strong> ${data.Genre}</p>
-                  <p><strong>Runtime:</strong> ${data.Runtime}</p>
-                  <p><strong>Director:</strong> ${data.Director}</p>
-                  <p><strong>Actors:</strong> ${data.Actors}</p>
-                  <p><strong>Plot:</strong> ${data.Plot}</p>
-                  <p><strong>IMDB Rating:</strong> ${data.imdbRating}</p>
-                  <p><strong>Awards:</strong> ${data.Awards}</p>
-                  <p><a href="https://www.imdb.com/title/${data.imdbID}/" target="_blank" rel="noopener">View on IMDb</a></p>
-                </div>
-              </div>
-              <h2>Official Trailer (YouTube)</h2>
-              <div id="trailer"></div>
-            `;
+    async function fetchMovieDetails(id) {
+      detailsDiv.textContent = 'Loading movie details...';
+      try {
+        // Fetch TMDb movie details
+        const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}&append_to_response=videos`);
+        const data = await res.json();
 
-            const trailerDiv = document.getElementById('trailer');
-            const ytQuery = encodeURIComponent(`${data.Title} official trailer`);
-            trailerDiv.innerHTML = `
-              <iframe 
-                src="https://www.youtube.com/embed?listType=search&list=${ytQuery}" 
-                allowfullscreen 
-                title="YouTube Trailer">
-              </iframe>
-            `;
-          } else {
-            detailsDiv.innerHTML = '<p>Movie not found.</p>';
+        if(data && data.id) {
+          const poster = data.poster_path ? TMDB_IMG_BASE + data.poster_path : 'https://via.placeholder.com/300x450?text=No+Image';
+          const year = data.release_date ? data.release_date.slice(0,4) : 'N/A';
+
+          // Find official trailer video on YouTube (TMDb videos)
+          let trailerKey = null;
+          if(data.videos && data.videos.results) {
+            const trailers = data.videos.results.filter(v => v.type === "Trailer" && v.site === "YouTube");
+            if(trailers.length) {
+              trailerKey = trailers[0].key;
+            }
           }
-        } catch (e) {
-          detailsDiv.innerHTML = '<p>Error loading movie details.</p>';
-        }
-      }
 
-      fetchMovie();
+          detailsDiv.innerHTML = `
+            <div class="container">
+              <img src="${poster}" alt="${data.title}" />
+              <div class="info">
+                <h1>${data.title} (${year})</h1>
+                <p><strong>Genres:</strong> ${data.genres.map(g => g.name).join(', ')}</p>
+                <p><strong>Runtime:</strong> ${data.runtime} minutes</p>
+                <p><strong>Rating:</strong> ${data.vote_average} / 10 (${data.vote_count} votes)</p>
+                <p><strong>Release Date:</strong> ${data.release_date}</p>
+                <p><strong>Overview:</strong> ${data.overview}</p>
+                <p><a href="https://www.themoviedb.org/movie/${data.id}" target="_blank" rel="noopener">View on TMDb</a></p>
+                <p><a href="https://www.imdb.com/title/${data.imdb_id}" target="_blank" rel="noopener">View on IMDb</a></p>
+              </div>
+            </div>
+            <div id="trailer">
+              ${trailerKey ? 
+                `<iframe 
+                   src="https://www.youtube.com/embed/${trailerKey}" 
+                   allowfullscreen 
+                   title="Official Trailer">
+                 </iframe>`
+                : '<p style="text-align:center; margin-top: 1rem;">No trailer available.</p>'
+              }
+            </div>
+          `;
+
+        } else {
+          detailsDiv.textContent = 'Movie not found.';
+        }
+      } catch(e) {
+        detailsDiv.textContent = 'Error loading movie details.';
+      }
     }
   </script>
 </body>

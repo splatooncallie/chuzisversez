@@ -77,3 +77,60 @@
     const OMDB_API_KEY = 'eec8827d'; // Your OMDb key (optional for extra info)
 
     const detailsDiv = document.getElementById('movieDetails');
+    const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w500';
+
+    // Get movie ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const movieId = urlParams.get('id');
+
+    if (!movieId) {
+      detailsDiv.textContent = 'No movie ID provided.';
+    } else {
+      fetchMovieDetails(movieId);
+    }
+
+    async function fetchMovieDetails(id) {
+      detailsDiv.textContent = 'Loading movie details...';
+
+      try {
+        // Fetch movie details
+        const movieRes = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}&language=en-US`);
+        const movie = await movieRes.json();
+
+        if(movie.status_code === 34) { // Not found
+          detailsDiv.textContent = 'Movie not found.';
+          return;
+        }
+
+        // Fetch videos (trailers)
+        const videosRes = await fetch(`https://api.themoviedb.org/3/movie/${id}/videos?api_key=${TMDB_API_KEY}&language=en-US`);
+        const videosData = await videosRes.json();
+
+        // Find official trailer YouTube video
+        const trailer = videosData.results.find(v =>
+          v.type === 'Trailer' && v.site === 'YouTube'
+        );
+
+        const poster = movie.poster_path ? TMDB_IMG_BASE + movie.poster_path : 'https://via.placeholder.com/300x450?text=No+Image';
+
+        detailsDiv.innerHTML = `
+          <div class="container">
+            <img src="${poster}" alt="${movie.title}" />
+            <div class="info">
+              <h1>${movie.title} (${movie.release_date ? movie.release_date.slice(0,4) : 'N/A'})</h1>
+              <p><strong>Genres:</strong> ${movie.genres.map(g => g.name).join(', ')}</p>
+              <p><strong>Rating:</strong> ${movie.vote_average} / 10 (${movie.vote_count} votes)</p>
+              <p><strong>Runtime:</strong> ${movie.runtime} min</p>
+              <p><strong>Overview:</strong> ${movie.overview || 'No overview available.'}</p>
+              ${trailer ? `<div id="trailer"><iframe src="https://www.youtube.com/embed/${trailer.key}" allowfullscreen></iframe></div>` : '<p>No trailer available.</p>'}
+            </div>
+          </div>
+        `;
+
+      } catch(e) {
+        detailsDiv.textContent = 'Failed to load movie details.';
+      }
+    }
+  </script>
+</body>
+</html>

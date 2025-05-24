@@ -1,81 +1,185 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Chuzis - Movie Search</title>
-<style>
-  body { font-family: Arial, sans-serif; background: #121212; color: #eee; margin: 0; padding: 20px; }
-  h1 { text-align: center; }
-  #movies { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; }
-  .movie { cursor: pointer; width: 150px; }
-  .movie img { width: 100%; border-radius: 8px; }
-  .movie-title { text-align: center; margin-top: 5px; font-size: 14px; }
-  #searchBar { display: block; margin: 0 auto 20px auto; width: 300px; padding: 10px; font-size: 16px; border-radius: 8px; border: none; }
-  #greeting { text-align: center; margin-bottom: 20px; font-size: 18px; }
-</style>
+  <meta charset="UTF-8">
+  <title>Chuzis – Home</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Helvetica Neue', sans-serif;
+      background-color: #111;
+      color: #fff;
+    }
+
+    #loading-screen {
+      position: fixed;
+      z-index: 9999;
+      background-color: #111;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      transition: opacity 0.5s ease;
+    }
+
+    .loader-content img {
+      width: 180px;
+      height: auto;
+      animation: pop 2s infinite ease-in-out;
+      margin-bottom: 20px;
+    }
+
+    .loader-content h1 {
+      font-size: 1.8rem;
+      color: #ffa500;
+      text-align: center;
+    }
+
+    @keyframes pop {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    header {
+      padding: 20px;
+      background: #222;
+      text-align: center;
+      font-size: 2rem;
+      color: #ffa500;
+    }
+
+    #search-section {
+      padding: 30px;
+      text-align: center;
+    }
+
+    #search-section input {
+      padding: 10px;
+      width: 300px;
+      border: none;
+      border-radius: 6px;
+    }
+
+    #search-section button {
+      padding: 10px 20px;
+      margin-left: 10px;
+      background: #ffa500;
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #results {
+      padding: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 20px;
+    }
+
+    .movie-card {
+      background: #1e1e1e;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .movie-card img {
+      width: 100%;
+      border-radius: 6px;
+    }
+
+    .movie-card h3 {
+      color: #ffa500;
+      font-size: 1.1rem;
+      margin: 10px 0 5px;
+    }
+
+    .movie-card a {
+      display: inline-block;
+      margin-top: 10px;
+      color: #fff;
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-  <h1>Welcome to Chuzis!</h1>
-  <div id="greeting">Search for films or browse trending movies below.</div>
-  <input id="searchBar" type="text" placeholder="Search movies..." />
+  <div id="loading-screen">
+    <div class="loader-content">
+      <img src="https://i.imgur.com/HcMiw8u.png" alt="Orange Cat Eating Popcorn" />
+      <h1>Loading Chuzis...</h1>
+    </div>
+  </div>
 
-  <div id="movies">Loading trending movies...</div>
+  <header>🎬 Welcome to Chuzis</header>
 
-<script>
-  const token = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJlODA5MWQ0NDdlODQ3MjhlYmU0Mzc5NzI0NWNjNmY4NSIsIm5iZiI6MTc0ODAzNTQ0Mi43MDUsInN1YiI6IjY4MzBlNzcyNjQwZTA1YjQyOGI2YTlmYyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.WoEuagI5GPkLtkM8xeY81jpNj6sS9VMRcYLuLS3xpFM';
-  const IMG_BASE = 'https://image.tmdb.org/t/p/w300';
-  const moviesDiv = document.getElementById('movies');
-  const searchBar = document.getElementById('searchBar');
+  <div id="search-section">
+    <input type="text" id="movieSearch" placeholder="Search for a movie...">
+    <button onclick="searchMovie()">Search</button>
+  </div>
 
-  // Fetch trending movies on load
-  fetchMovies('trending/movie/week');
+  <div id="results"></div>
 
-  // Listen for search input
-  searchBar.addEventListener('keypress', e => {
-    if (e.key === 'Enter') {
-      const query = searchBar.value.trim();
-      if (query.length > 0) {
-        fetchMovies(`search/movie?query=${encodeURIComponent(query)}`);
-      } else {
-        fetchMovies('trending/movie/week');
+  <script>
+    window.addEventListener("load", function () {
+      const loader = document.getElementById("loading-screen");
+      loader.style.opacity = "0";
+      setTimeout(() => loader.style.display = "none", 500);
+    });
+
+    async function searchMovie() {
+      const query = document.getElementById("movieSearch").value;
+      const resultsContainer = document.getElementById("results");
+      resultsContainer.innerHTML = "<p>Searching...</p>";
+
+      try {
+        const res = await fetch(`https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(query)}&include_adult=false&language=en-US&page=1`, {
+          headers: {
+            Authorization: `Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJlODA5MWQ0NDdlODQ3MjhlYmU0Mzc5NzI0NWNjNmY4NSIsIm5iZiI6MTc0ODAzNTQ0Mi43MDUsInN1YiI6IjY4MzBlNzcyNjQwZTA1YjQyOGI2YTlmYyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.WoEuagI5GPkLtkM8xeY81jpNj6sS9VMRcYLuLS3xpFM`
+          }
+        });
+
+        const data = await res.json();
+        resultsContainer.innerHTML = "";
+
+        if (data.results.length === 0) {
+          resultsContainer.innerHTML = "<p>No movies found.</p>";
+          return;
+        }
+
+        data.results.forEach(movie => {
+          const movieCard = document.createElement("div");
+          movieCard.classList.add("movie-card");
+
+          const img = document.createElement("img");
+          img.src = movie.poster_path ? `https://image.tmdb.org/t/p/w300${movie.poster_path}` : "https://via.placeholder.com/300x450?text=No+Image";
+          const title = document.createElement("h3");
+          title.textContent = movie.title;
+
+          const link = document.createElement("a");
+          link.href = `https://www.google.com/search?q=watch+${encodeURIComponent(movie.title)}+online`;
+          link.target = "_blank";
+          link.textContent = "Watch Now";
+
+          movieCard.appendChild(img);
+          movieCard.appendChild(title);
+          movieCard.appendChild(link);
+
+          resultsContainer.appendChild(movieCard);
+        });
+      } catch (error) {
+        resultsContainer.innerHTML = "<p>Error fetching movies.</p>";
       }
     }
-  });
-
-  async function fetchMovies(endpoint) {
-    moviesDiv.textContent = 'Loading movies...';
-    try {
-      const res = await fetch(`https://api.themoviedb.org/3/${endpoint}`, {
-        headers: { Authorization: 'Bearer ' + token }
-      });
-      if (!res.ok) throw new Error('HTTP error ' + res.status);
-
-      const data = await res.json();
-      if (!data.results || data.results.length === 0) {
-        moviesDiv.textContent = 'No movies found.';
-        return;
-      }
-
-      moviesDiv.innerHTML = '';
-      data.results.forEach(movie => {
-        const movieEl = document.createElement('div');
-        movieEl.className = 'movie';
-        movieEl.innerHTML = `
-          <img src="${movie.poster_path ? IMG_BASE + movie.poster_path : 'https://via.placeholder.com/300x450?text=No+Image'}" alt="${movie.title}" />
-          <div class="movie-title">${movie.title}</div>
-        `;
-        movieEl.onclick = () => {
-          // Open movie.html with movie ID query param
-          window.location.href = `movie.html?id=${movie.id}`;
-        };
-        moviesDiv.appendChild(movieEl);
-      });
-    } catch (err) {
-      moviesDiv.textContent = 'Failed to load movies.';
-      console.error(err);
-    }
-  }
-</script>
+  </script>
 </body>
 </html>

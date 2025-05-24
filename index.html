@@ -11,7 +11,7 @@
     }
 
     body {
-      font-family: 'Helvetica Neue', sans-serif;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
       background-color: #111;
       color: #fff;
     }
@@ -28,25 +28,34 @@
       align-items: center;
       justify-content: center;
       flex-direction: column;
-      transition: opacity 0.5s ease;
+      animation: fadeOut 2s ease 3s forwards;
     }
 
     .loader-content img {
-      width: 180px;
+      width: 150px;
       height: auto;
-      animation: pop 2s infinite ease-in-out;
-      margin-bottom: 20px;
+      animation: catDrop 2s ease-in, catSpinScale 1.5s ease-out 2s forwards;
     }
 
     .loader-content h1 {
-      font-size: 1.8rem;
-      color: #ffa500;
+      font-size: 2rem;
+      color: #ff69b4;
       text-align: center;
+      margin-top: 20px;
     }
 
-    @keyframes pop {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
+    @keyframes fadeOut {
+      to { opacity: 0; visibility: hidden; }
+    }
+
+    @keyframes catDrop {
+      0% { transform: translateY(-100%); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes catSpinScale {
+      0% { transform: rotate(0deg) scale(1); }
+      100% { transform: rotate(360deg) scale(3); }
     }
 
     header {
@@ -54,7 +63,7 @@
       background: #222;
       text-align: center;
       font-size: 2rem;
-      color: #ffa500;
+      color: #ff69b4;
     }
 
     #search-section {
@@ -72,7 +81,7 @@
     #search-section button {
       padding: 10px 20px;
       margin-left: 10px;
-      background: #ffa500;
+      background: #ff69b4;
       color: #000;
       border: none;
       border-radius: 6px;
@@ -99,7 +108,7 @@
     }
 
     .movie-card h3 {
-      color: #ffa500;
+      color: #ff69b4;
       font-size: 1.1rem;
       margin: 10px 0 5px;
     }
@@ -130,12 +139,6 @@
   <div id="results"></div>
 
   <script>
-    window.addEventListener("load", function () {
-      const loader = document.getElementById("loading-screen");
-      loader.style.opacity = "0";
-      setTimeout(() => loader.style.display = "none", 500);
-    });
-
     async function searchMovie() {
       const query = document.getElementById("movieSearch").value;
       const resultsContainer = document.getElementById("results");

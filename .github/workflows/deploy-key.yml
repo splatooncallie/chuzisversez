@@ -1,0 +1,25 @@
+name: Deploy Key
+
+on:
+  push:
+    branches: [ main ]  # or your deploy branch
+
+jobs:
+  generate-key:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Create protected/key.json from secret
+        run: |
+          mkdir -p protected
+          echo "{ \"key\": \"${{ secrets.ACCESS_KEY }}\" }" > protected/key.json
+
+      - name: Commit and push key.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add protected/key.json
+          git commit -m "Add key.json from secret" || echo "No changes to commit"
+          git push
